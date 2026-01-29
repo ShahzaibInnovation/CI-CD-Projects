@@ -1,1 +1,101 @@
 
+name: Deploy Full Stack App to EC2 using Docker & ECR
+
+on:
+  push:
+    branches:
+      - main 
+    paths:
+      - "server/**"
+      - "client/**"
+  workflow_dispatch:
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      # 3️⃣ Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # =======================
+      # 🔹 BACKEND PIPELINE
+      # =======================
+
+      - name: Build Backend Image
+        working-directory: ./server
+        run: docker build -t backend-app .
+
+      - name: Tag Backend Image
+        run: |
+          docker tag backend-app:latest \
+          ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+
+      - name: Push Backend Image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+
+      # =======================
+      # 🔹 FRONTEND PIPELINE
+      # =======================
+
+      - name: Build Frontend Image
+        working-directory: ./client
+        run: docker build -t frontend-app .
+
+      - name: Tag Frontend Image
+        run: |
+          docker tag frontend-app:latest \
+          ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
+
+      - name: Push Frontend Image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
+
+      # =======================
+      # 🚀 DEPLOY TO EC2
+      # =======================
+
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Logging into ECR..."
+            aws ecr get-login-password --region ap-south-1 \
+            | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+
+            echo "Pulling latest images..."
+            docker pull ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+            docker pull ${{ secrets.ECR_REPOSITORY}}/frontend-app:latest
+
+            echo "Stopping old containers..."
+            docker stop backend frontend || true
+            docker rm backend frontend || true
+
+            echo "Starting backend container..."
+            docker run -d \
+              --name backend \
+              -p 8000:8000 \
+              ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+
+            echo "Starting frontend container..."
+            docker run -d \
+              --name frontend \
+              -p 80:80 \
+              ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
