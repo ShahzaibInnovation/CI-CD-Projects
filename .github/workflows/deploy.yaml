@@ -36,7 +36,7 @@ jobs:
       # =======================
 
       - name: Build Backend Image
-        working-directory: ./server
+        working-directory: React-Node-MongoDB-Docker-Project-CICD-GITHUB-ACTIONS-EC2/server
         run: docker build -t backend-app .
 
       - name: Tag Backend Image
@@ -53,7 +53,7 @@ jobs:
       # =======================
 
       - name: Build Frontend Image
-        working-directory: ./client
+        working-directory: React-Node-MongoDB-Docker-Project-CICD-GITHUB-ACTIONS-EC2/client
         run: docker build -t frontend-app .
 
       - name: Tag Frontend Image
