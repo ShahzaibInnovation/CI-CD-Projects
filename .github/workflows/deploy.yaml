@@ -1,10 +1,9 @@
-
 name: Deploy Full Stack App to EC2 using Docker & ECR
 
 on:
   push:
     branches:
-      - main 
+      - main
     paths:
       - "server/**"
       - "client/**"
@@ -27,10 +26,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
 
-
       # 3️⃣ Login to Amazon ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: ap-southeast-2
 
       # =======================
       # 🔹 BACKEND PIPELINE
@@ -43,11 +43,11 @@ jobs:
       - name: Tag Backend Image
         run: |
           docker tag backend-app:latest \
-          ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+          ${{ secrets.ECR_REPOSITORY }}:backend-latest
 
       - name: Push Backend Image to ECR
         run: |
-          docker push ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+          docker push ${{ secrets.ECR_REPOSITORY }}:backend-latest
 
       # =======================
       # 🔹 FRONTEND PIPELINE
@@ -60,11 +60,11 @@ jobs:
       - name: Tag Frontend Image
         run: |
           docker tag frontend-app:latest \
-          ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
+          ${{ secrets.ECR_REPOSITORY }}:frontend-latest
 
       - name: Push Frontend Image to ECR
         run: |
-          docker push ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
+          docker push ${{ secrets.ECR_REPOSITORY }}:frontend-latest
 
       # =======================
       # 🚀 DEPLOY TO EC2
@@ -82,8 +82,8 @@ jobs:
             | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
             echo "Pulling latest images..."
-            docker pull ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
-            docker pull ${{ secrets.ECR_REPOSITORY}}/frontend-app:latest
+            docker pull ${{ secrets.ECR_REPOSITORY }}:backend-latest
+            docker pull ${{ secrets.ECR_REPOSITORY }}:frontend-latest
 
             echo "Stopping old containers..."
             docker stop backend frontend || true
@@ -93,10 +93,10 @@ jobs:
             docker run -d \
               --name backend \
               -p 8000:8000 \
-              ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+              ${{ secrets.ECR_REPOSITORY }}:backend-latest
 
             echo "Starting frontend container..."
             docker run -d \
               --name frontend \
               -p 80:80 \
-              ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
+              ${{ secrets.ECR_REPOSITORY }}:frontend-latest
