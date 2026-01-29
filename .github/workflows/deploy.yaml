@@ -98,5 +98,5 @@ jobs:
             echo "Starting frontend container..."
             docker run -d \
               --name frontend \
-              -p 80:80 \
+              -p 3000:3000 \
               ${{ secrets.ECR_REPOSITORY }}:frontend-latest
