@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      #  Checkout code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Configure AWS credentials
+      # Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -26,14 +26,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
 
-      # 3️⃣ Login to Amazon ECR
+      # Login to Amazon ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
         with:
           region: ap-southeast-2
 
       # =======================
-      # 🔹 BACKEND PIPELINE
+      #  BACKEND PIPELINE
       # =======================
 
       - name: Build Backend Image
@@ -50,7 +50,7 @@ jobs:
           docker push ${{ secrets.ECR_REPOSITORY }}:backend-latest
 
       # =======================
-      # 🔹 FRONTEND PIPELINE
+      #  FRONTEND PIPELINE
       # =======================
 
       - name: Build Frontend Image
@@ -67,7 +67,7 @@ jobs:
           docker push ${{ secrets.ECR_REPOSITORY }}:frontend-latest
 
       # =======================
-      # 🚀 DEPLOY TO EC2
+      #  DEPLOY TO EC2
       # =======================
 
       - name: Deploy on EC2 via SSH
