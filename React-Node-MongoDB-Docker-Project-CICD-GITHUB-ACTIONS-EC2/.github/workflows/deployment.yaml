@@ -1,9 +1,9 @@
 name: Deploy Full Stack App to EC2 using Docker & ECR
 
 on:
-  push:
-    branches:
-      - main
+  push:#
+    branches:#
+      - main#
     paths:
       - "server/**"
       - "client/**"
@@ -41,11 +41,11 @@ jobs:
       - name: Tag Backend Image
         run: |
           docker tag backend-app:latest \
-          ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+          ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
 
       - name: Push Backend Image to ECR
         run: |
-          docker push ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+          docker push ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
 
       # =======================
       # 🔹 FRONTEND PIPELINE
@@ -58,11 +58,11 @@ jobs:
       - name: Tag Frontend Image
         run: |
           docker tag frontend-app:latest \
-          ${{ secrets.ECR_REGISTRY }}/frontend-app:latest
+          ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
 
       - name: Push Frontend Image to ECR
         run: |
-          docker push ${{ secrets.ECR_REGISTRY }}/frontend-app:latest
+          docker push ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
 
       # =======================
       # 🚀 DEPLOY TO EC2
@@ -77,11 +77,11 @@ jobs:
           script: |
             echo "Logging into ECR..."
             aws ecr get-login-password --region ap-south-1 \
-            | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
             echo "Pulling latest images..."
-            docker pull ${{ secrets.ECR_REGISTRY }}/backend-app:latest
-            docker pull ${{ secrets.ECR_REGISTRY }}/frontend-app:latest
+            docker pull ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
+            docker pull ${{ secrets.ECR_REPOSITORY}}/frontend-app:latest
 
             echo "Stopping old containers..."
             docker stop backend frontend || true
@@ -91,10 +91,10 @@ jobs:
             docker run -d \
               --name backend \
               -p 8000:8000 \
-              ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+              ${{ secrets.ECR_REPOSITORY }}/backend-app:latest
 
             echo "Starting frontend container..."
             docker run -d \
               --name frontend \
               -p 80:80 \
-              ${{ secrets.ECR_REGISTRY }}/frontend-app:latest
+              ${{ secrets.ECR_REPOSITORY }}/frontend-app:latest
